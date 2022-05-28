@@ -1,8 +1,13 @@
+import wandb
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
 from fixation import config, FixationDataset, FixNet
+
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"Using device: {device}")
 
 
 def get_dataloader(
@@ -31,4 +36,12 @@ val_dl = get_dataloader("val", batch_size=config.BATCH_SIZE, shuffle=True)
 test_dl = get_dataloader("test", batch_size=config.BATCH_SIZE, shuffle=True)
 
 model = FixNet()
-model(torch.randn(1, 3, 224, 224))
+optimizer = torch.optim.Adam(model.parameters(), lr=config.LEARNING_RATE)
+loss_fcn = nn.MSELoss()
+
+wandb.init(project="fixation-prediction", config=config)
+wandb.watch(model)
+
+# training loop
+for epoch in range(config.EPOCHS):
+    
