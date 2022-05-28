@@ -44,4 +44,4 @@ wandb.watch(model)
 
 # training loop
 for epoch in range(config.EPOCHS):
-    
+    pass
