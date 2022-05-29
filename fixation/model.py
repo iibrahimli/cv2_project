@@ -21,10 +21,11 @@ class Decoder(nn.Module):
         """
 
         # features are expected to be:
+        # layer0: [N, 64, 112, 112]
         # layer1: [N, 128, 56, 56]
         # layer2: [N, 256, 28, 28]
         # layer3: [N, 512, 14, 14]
-        # layer4: [N, 1024, 7,  7]
+        # layer4: [N, 1024, 7, 7]
         pass
 
 
@@ -38,13 +39,14 @@ class FixNet(nn.Module):
 
         # encoder is a pretrained resnext50
         backbone = models.resnext50_32x4d(pretrained=True)
-        backbone_nodes = {
+        feature_nodes = {
+            "relu": "layer0",
             "layer1.2.relu": "layer1",
             "layer2.3.relu": "layer2",
             "layer3.5.relu": "layer3",
             "layer4.2.relu": "layer4",
         }
-        self.encoder = create_feature_extractor(backbone, backbone_nodes)
+        self.encoder = create_feature_extractor(backbone, feature_nodes)
         self.decoder = Decoder()
 
     def forward(self, x):
