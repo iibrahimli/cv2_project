@@ -2,7 +2,6 @@
 Fixation prediction model.
 """
 
-from random import gauss
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
