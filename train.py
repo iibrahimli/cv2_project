@@ -91,7 +91,7 @@ if __name__ == "__main__":
 
     if not args.no_wandb:
         wandb.init(project="fixation-prediction", config=args)
-        wandb.watch(model)
+        wandb.watch(model, log_freq=args.log_freq * 10)
 
     step = 0
 
