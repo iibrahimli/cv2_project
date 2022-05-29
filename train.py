@@ -132,11 +132,13 @@ if __name__ == "__main__":
             wandb.log({"val_loss": loss.item()}, step=step)
 
         # save checkpoint
+        cp_path = cp_dir / f"latest.pth"
         torch.save(
             {
                 "epoch": epoch,
                 "model_state_dict": model.state_dict(),
                 "optimizer_state_dict": optimizer.state_dict(),
             },
-            cp_dir / f"latest.pt",
+            cp_path
         )
+        print(f"Saved checkpoint to {cp_path}")
