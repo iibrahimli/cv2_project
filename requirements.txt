@@ -1,1 +1,6 @@
-# TODO
+albumentations
+torch
+torchvision
+wandb
+imageio
+numpy
