@@ -121,12 +121,15 @@ if __name__ == "__main__":
 
         # validation
         model.eval()
+        val_loss = 0
         with torch.no_grad():
             for it, batch in enumerate(val_dl):
-                pred, loss = run_on_batch(model, batch, loss_fn)
-                print(f"[epoch {epoch+1}/{args.max_epochs}] val loss: {loss.item():.4f}")
-                if not args.no_wandb:
-                    wandb.log({"val_loss": loss.item()}, step=step)
+                _, loss = run_on_batch(model, batch, loss_fn)
+                val_loss += loss.item()
+        val_loss = val_loss / len(val_dl)
+        print(f"[epoch {epoch+1}/{args.max_epochs}] val loss: {loss.item():.4f}")
+        if not args.no_wandb:
+            wandb.log({"val_loss": loss.item()}, step=step)
 
         # save checkpoint
         torch.save(
