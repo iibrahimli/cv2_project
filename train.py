@@ -1,9 +1,12 @@
+import argparse
+
 import wandb
 import torch
 import torch.nn as nn
+from tqdm import tqdm
 from torch.utils.data import DataLoader
 
-from fixation import config, FixationDataset, FixNet
+from fixation import FixationDataset, FixNet
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -11,6 +14,7 @@ print(f"Using device: {device}")
 
 
 def get_dataloader(
+    root_dir,
     split,
     batch_size,
     image_transform=None,
@@ -20,7 +24,7 @@ def get_dataloader(
 ):
     return DataLoader(
         dataset=FixationDataset(
-            root_dir=config.DATA_ROOT_DIR,
+            root_dir=root_dir,
             split=split,
             image_transform=image_transform,
             fixation_transform=fixation_transform,
@@ -28,20 +32,39 @@ def get_dataloader(
         batch_size=batch_size,
         shuffle=shuffle,
         num_workers=num_workers,
+        collate_fn=FixationDataset.collate_fn,
     )
 
 
-train_dl = get_dataloader("train", batch_size=config.BATCH_SIZE, shuffle=True)
-val_dl = get_dataloader("val", batch_size=config.BATCH_SIZE, shuffle=True)
-test_dl = get_dataloader("test", batch_size=config.BATCH_SIZE, shuffle=True)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--root_dir", type=str, default="data")
+    parser.add_argument("--batch_size", type=int, default=32)
+    parser.add_argument("--max_epochs", type=int, default=10)
+    parser.add_argument("--lr", type=float, default=1e-3)
+    parser.add_argument("--no_wandb", action="store_true")
+    args = parser.parse_args()
 
-model = FixNet()
-optimizer = torch.optim.Adam(model.parameters(), lr=config.LEARNING_RATE)
-loss_fcn = nn.MSELoss()
+    print("Using args:")
+    for arg in vars(args):
+        print(f"    {arg}: {getattr(args, arg)}")
+    print()
 
-wandb.init(project="fixation-prediction", config=config)
-wandb.watch(model)
+    # get dataloaders
+    train_dl = get_dataloader(args.root_dir, "train", batch_size=args.batch_size)
+    val_dl = get_dataloader(args.root_dir, "val", batch_size=args.batch_size)
+    test_dl = get_dataloader(args.root_dir, "test", batch_size=args.batch_size)
 
-# training loop
-for epoch in range(config.EPOCHS):
-    pass
+    # initialize model, loss, and optimizer
+    model = FixNet()
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    loss_fcn = nn.MSELoss()
+
+    if not args.no_wandb:
+        wandb.init(project="fixation-prediction", config=args)
+        wandb.watch(model)
+
+    # training loop
+    for epoch in range(args.max_epochs):
+        model(torch.randn(1, 3, 224, 224))
+        n_params = sum(p.numel() for p in model.parameters())
