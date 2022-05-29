@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 
 import imageio
+import numpy as np
 from torch.utils.data import Dataset
 
 
@@ -65,3 +66,15 @@ class FixationDataset(Dataset):
             sample["fixation"] = self.fixation_transform(sample["fixation"])
 
         return sample
+
+    @staticmethod
+    def collate_fn(batch):
+        """
+        Collate function for DataLoader.
+        """
+
+        # batch is a list of dicts
+        imgs = np.stack([x["image"] for x in batch])
+        fixs = np.stack([x["fixation"] for x in batch])
+
+        return {"image": imgs, "fixation": fixs}
