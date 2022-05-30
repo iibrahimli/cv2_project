@@ -73,7 +73,6 @@ if __name__ == "__main__":
     parser.add_argument("--val_freq", type=int, default=50)
     parser.add_argument("--log_freq", type=int, default=5)
     parser.add_argument("--es_patience", type=int, default=20)
-    parser.add_argument("--es_min_delta", type=float, default=0.01)
     args = parser.parse_args()
 
     print("Using args:")
