@@ -20,14 +20,20 @@ def get_dataloader(
     root_dir,
     split,
     batch_size,
+    use_aug=False,
     shuffle=True,
     num_workers=0,
 ):
-    aug = A.Compose(
-        [
+
+    aug = []
+    if use_aug:
+        aug = [
             # A.HorizontalFlip(always_apply=True),
-            A.RandomBrightnessContrast(0.3, 0.2, p=0.5),
             # A.Rotate(limit=45, p=1),
+            A.RandomBrightnessContrast(0.3, 0.2, p=0.5),
+        ]
+    transform = A.Compose(
+        [
             A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
             ToTensorV2(),
         ]
@@ -36,7 +42,7 @@ def get_dataloader(
         dataset=FixationDataset(
             root_dir=root_dir,
             split=split,
-            transform=aug,
+            transform=transform,
         ),
         batch_size=batch_size,
         shuffle=shuffle,
@@ -62,8 +68,12 @@ if __name__ == "__main__":
     parser.add_argument("--max_epochs", type=int, default=10)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--freeze_encoder", action="store_true")
+    parser.add_argument("--no_aug", action="store_true")
     parser.add_argument("--no_wandb", action="store_true")
-    parser.add_argument("--log_freq", type=int, default=1)
+    parser.add_argument("--val_freq", type=int, default=20)
+    parser.add_argument("--log_freq", type=int, default=5)
+    parser.add_argument("--es_patience", type=int, default=20)
+    parser.add_argument("--es_min_delta", type=float, default=0.01)
     args = parser.parse_args()
 
     print("Using args:")
@@ -74,7 +84,9 @@ if __name__ == "__main__":
     cp_dir.mkdir(exist_ok=True)
 
     # get dataloaders
-    train_dl = get_dataloader(args.root_dir, "train", batch_size=args.batch_size)
+    train_dl = get_dataloader(
+        args.root_dir, "train", batch_size=args.batch_size, use_aug=not args.no_aug
+    )
     val_dl = get_dataloader(args.root_dir, "val", batch_size=args.batch_size)
     test_dl = get_dataloader(args.root_dir, "test", batch_size=args.batch_size)
 
@@ -93,11 +105,14 @@ if __name__ == "__main__":
         wandb.init(project="fixation-prediction", config=args)
         wandb.watch(model, log_freq=args.log_freq * 10)
 
-    step = 0
+    step = -1
+    min_val_loss = float("inf")
+    es_counter = 0
 
     # training loop
     for epoch in range(args.max_epochs):
         for it, batch in enumerate(train_dl):
+            step += 1
 
             start_time = time.perf_counter()
 
@@ -109,36 +124,49 @@ if __name__ == "__main__":
 
             it_time = round((time.perf_counter() - start_time) * 1000)
 
+            log_prefix = (
+                f"[epoch {epoch+1}/{args.max_epochs}, iter {it+1}/{len(train_dl)}]"
+            )
+
             # log
             if step % args.log_freq == 0:
-                print(
-                    f"[epoch {epoch+1}/{args.max_epochs}, iter {it+1}/{len(train_dl)}] train loss: {loss.item():.4f} ({it_time:} ms/it)"
-                )
+                print(f"{log_prefix} train loss: {loss.item():.4f} ({it_time:} ms/it)")
                 if not args.no_wandb:
                     wandb.log({"loss": loss.item()}, step=step)
 
-            step += 1
+            # validation
+            if step % args.val_freq == 0:
+                model.eval()
+                val_loss = 0
+                with torch.no_grad():
+                    for it, batch in enumerate(val_dl):
+                        _, loss = run_on_batch(model, batch, loss_fn)
+                        val_loss += loss.item()
+                val_loss = val_loss / len(val_dl)
 
-        # validation
-        model.eval()
-        val_loss = 0
-        with torch.no_grad():
-            for it, batch in enumerate(val_dl):
-                _, loss = run_on_batch(model, batch, loss_fn)
-                val_loss += loss.item()
-        val_loss = val_loss / len(val_dl)
-        print(f"[epoch {epoch+1}/{args.max_epochs}] val loss: {loss.item():.4f}")
-        if not args.no_wandb:
-            wandb.log({"val_loss": loss.item()}, step=step)
+                # log
+                print(f"{log_prefix} val loss: {loss.item():.4f}")
+                if not args.no_wandb:
+                    wandb.log({"val_loss": loss.item()}, step=step)
 
-        # save checkpoint
-        cp_path = cp_dir / f"latest.pth"
-        torch.save(
-            {
-                "epoch": epoch,
-                "model_state_dict": model.state_dict(),
-                "optimizer_state_dict": optimizer.state_dict(),
-            },
-            cp_path
-        )
-        print(f"Saved checkpoint to {cp_path}")
+                # early stopping
+                cp_path = cp_dir / f"model.pth"
+                if val_loss < min_val_loss:
+                    min_val_loss = val_loss
+                    es_counter = 0
+
+                    # save checkpoint
+                    torch.save(
+                        {
+                            "epoch": epoch,
+                            "model_state_dict": model.state_dict(),
+                            "optimizer_state_dict": optimizer.state_dict(),
+                        },
+                        cp_path,
+                    )
+                    print(f"Saved checkpoint to {cp_path}")
+                else:
+                    es_counter += 1
+                    if es_counter >= args.es_patience:
+                        print(f"Early stopping at epoch {epoch+1}")
+                        break
