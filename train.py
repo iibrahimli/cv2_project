@@ -1,3 +1,10 @@
+"""
+Training script.
+
+TODO:
+ - Log images & predictions to wandb
+"""
+
 import time
 import argparse
 from pathlib import Path
