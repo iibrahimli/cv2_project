@@ -20,8 +20,8 @@ def _get_list_from_file(file_path):
 
 
 class FixationDataset(Dataset):
-    def __init__(self, root_dir, split, transform=None):
-        self.root_dir = Path(root_dir)
+    def __init__(self, data_root_dir, split, transform=None):
+        self.data_root_dir = Path(data_root_dir)
 
         all_splits = ("train", "val", "test")
         assert split in all_splits, f"Split must be one of {all_splits}"
@@ -29,7 +29,7 @@ class FixationDataset(Dataset):
 
         self.transform = transform
 
-        self.images = _get_list_from_file(self.root_dir / f"{split}_images.txt")
+        self.images = _get_list_from_file(self.data_root_dir / f"{split}_images.txt")
 
         # human sort the filenames
         int_re = re.compile(r"\d+")
@@ -39,7 +39,7 @@ class FixationDataset(Dataset):
         # fixations not available for test split
         if split != "test":
             self.fixations = _get_list_from_file(
-                self.root_dir / f"{split}_fixations.txt"
+                self.data_root_dir / f"{split}_fixations.txt"
             )
             self.fixations.sort(key=sort_key)
 
@@ -51,9 +51,9 @@ class FixationDataset(Dataset):
         return len(self.images)
 
     def __getitem__(self, idx):
-        img = imageio.imread(self.root_dir / self.images[idx])
+        img = imageio.imread(self.data_root_dir / self.images[idx])
         if self.split != "test":
-            fix = imageio.imread(self.root_dir / self.fixations[idx])
+            fix = imageio.imread(self.data_root_dir / self.fixations[idx])
             fix = fix[None, ...]
             fix = fix / fix.max()
         else:
