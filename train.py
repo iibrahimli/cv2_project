@@ -13,6 +13,7 @@ import wandb
 import torch
 import torch.nn as nn
 import albumentations as A
+from torchvision.utils import make_grid
 from albumentations.pytorch import ToTensorV2
 from torch.utils.data import DataLoader
 
@@ -23,31 +24,33 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
 
+IMAGENET_MEAN = (0.485, 0.456, 0.406)
+IMAGENET_STD = (0.229, 0.224, 0.225)
+
+
 def get_dataloader(
-    root_dir,
+    data_root_dir,
     split,
     batch_size,
     use_aug=False,
     shuffle=True,
     num_workers=0,
 ):
-
-    aug = []
+    transforms = []
     if use_aug:
-        aug = [
-            # A.HorizontalFlip(always_apply=True),
-            # A.Rotate(limit=45, p=1),
-            A.RandomBrightnessContrast(0.3, 0.2, p=0.5),
-        ]
-    transform = A.Compose(
-        [
-            A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-            ToTensorV2(),
-        ]
-    )
+        transforms.extend(
+            [
+                A.RandomBrightnessContrast(0.3, 0.2, p=0.5),
+            ]
+        )
+    transforms.extend([
+        A.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
+        ToTensorV2(),
+    ])
+    transform = A.Compose(transforms)
     return DataLoader(
         dataset=FixationDataset(
-            root_dir=root_dir,
+            data_root_dir=data_root_dir,
             split=split,
             transform=transform,
         ),
@@ -57,6 +60,29 @@ def get_dataloader(
         collate_fn=FixationDataset.collate_fn,
         pin_memory=True if device.type == "cuda" else False,
     )
+
+
+def get_prediction_demo(batch, model):
+    """Returns image grid of predictions."""
+    imgs = batch["image"].to(device)
+    model.eval()
+    with torch.no_grad():
+        preds = model(imgs)
+    preds = model(imgs).cpu().detach().repeat(1, 3, 1, 1)
+
+    # de-normalize images
+    imgs = imgs.cpu().detach()
+    means = torch.tensor(IMAGENET_STD).view(1, 3, 1, 1)
+    stds = torch.tensor(IMAGENET_MEAN).view(1, 3, 1, 1)
+    imgs = (imgs * stds) + means
+
+    # scale preds to [0, 1]
+    preds = torch.exp(preds)
+    preds = preds / preds.max()
+
+    res = torch.cat((imgs, preds), dim=3)
+
+    return make_grid(res, nrow=4).permute(1, 2, 0)
 
 
 def run_on_batch(model, batch, loss_fn):
@@ -69,7 +95,7 @@ def run_on_batch(model, batch, loss_fn):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--root_dir", type=str, default="data")
+    parser.add_argument("--data_root_dir", type=str, default="data")
     parser.add_argument("--checkpoint_dir", type=str, default="checkpoints")
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--max_epochs", type=int, default=10)
@@ -91,14 +117,14 @@ if __name__ == "__main__":
 
     # get dataloaders
     train_dl = get_dataloader(
-        args.root_dir, "train", batch_size=args.batch_size, use_aug=not args.no_aug
+        args.data_root_dir, "train", batch_size=args.batch_size, use_aug=not args.no_aug
     )
-    val_dl = get_dataloader(args.root_dir, "val", batch_size=args.batch_size)
-    test_dl = get_dataloader(args.root_dir, "test", batch_size=args.batch_size)
+    val_dl = get_dataloader(args.data_root_dir, "val", batch_size=args.batch_size)
+    test_dl = get_dataloader(args.data_root_dir, "test", batch_size=args.batch_size)
 
     # initialize model, loss, and optimizer
     model = FixNet(
-        Path(args.root_dir) / "center_bias_density.npy",
+        Path(args.data_root_dir) / "center_bias_density.npy",
         freeze_encoder=args.freeze_encoder,
     ).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
@@ -110,6 +136,9 @@ if __name__ == "__main__":
     if not args.no_wandb:
         wandb.init(project="fixation-prediction", config=args)
         wandb.watch(model, log_freq=args.log_freq * 10)
+    
+    # demo batch
+    demo_batch = next(iter(train_dl))
 
     step = -1
     min_val_loss = float("inf")
@@ -153,7 +182,8 @@ if __name__ == "__main__":
                 # log
                 print(f"{log_prefix} val loss: {loss.item():.4f}")
                 if not args.no_wandb:
-                    wandb.log({"val_loss": loss.item()}, step=step)
+                    demo_imgs = get_prediction_demo(demo_batch, model)
+                    wandb.log({"val_loss": loss.item(), "demo_imgs": demo_imgs}, step=step)
 
                 # early stopping
                 cp_path = cp_dir / f"model.pth"
