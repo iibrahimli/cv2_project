@@ -2,7 +2,7 @@
 Training script.
 
 TODO:
- - Log images & predictions to wandb
+ - fix ES patience counting
 """
 
 import time
