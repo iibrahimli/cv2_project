@@ -158,9 +158,13 @@ if __name__ == "__main__":
     step = -1
     min_val_loss = float("inf")
     es_counter = 0
+    stopped = False
 
     # training loop
     for epoch in range(args.max_epochs):
+        if stopped:
+            break
+        
         for it, batch in enumerate(train_dl):
             step += 1
 
@@ -228,4 +232,5 @@ if __name__ == "__main__":
                     es_counter += 1
                     if es_counter >= args.es_patience:
                         print(f"Early stopping at epoch {epoch+1}")
+                        stopped = True
                         break
