@@ -145,7 +145,7 @@ if __name__ == "__main__":
         center_bias_path=center_bias_path,
         freeze_encoder=args.freeze_encoder,
     ).to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=0.1)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     # loss_fn = nn.MSELoss()
     loss_fn = nn.BCEWithLogitsLoss().to(device)
     n_trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
