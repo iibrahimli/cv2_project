@@ -43,10 +43,12 @@ def get_dataloader(
                 A.RandomBrightnessContrast(0.3, 0.2, p=0.5),
             ]
         )
-    transforms.extend([
-        A.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
-        ToTensorV2(),
-    ])
+    transforms.extend(
+        [
+            A.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
+            ToTensorV2(),
+        ]
+    )
     transform = A.Compose(transforms)
     return DataLoader(
         dataset=FixationDataset(
@@ -65,10 +67,13 @@ def get_dataloader(
 def get_prediction_demo(batch, model):
     """Returns image grid of predictions."""
     imgs = batch["image"].to(device)
+    labels = batch["fixation"]
+
     model.eval()
     with torch.no_grad():
         preds = model(imgs)
     preds = model(imgs).cpu().detach().repeat(1, 3, 1, 1)
+    labels = labels.repeat(1, 3, 1, 1)
 
     # de-normalize images
     imgs = imgs.cpu().detach()
@@ -80,7 +85,11 @@ def get_prediction_demo(batch, model):
     preds = torch.exp(preds)
     preds = preds / preds.max()
 
-    res = torch.cat((imgs, preds), dim=3)
+    # scale labels
+    labels = labels / labels.max()
+
+    # merge images, labels, and predictions
+    res = torch.cat((imgs, labels, preds), dim=3)
 
     return make_grid(res, nrow=4).permute(1, 2, 0)
 
@@ -136,7 +145,7 @@ if __name__ == "__main__":
     if not args.no_wandb:
         wandb.init(project="fixation-prediction", config=args)
         wandb.watch(model, log_freq=args.log_freq * 10)
-    
+
     # demo batch
     demo_batch = next(iter(train_dl))
 
@@ -183,7 +192,15 @@ if __name__ == "__main__":
                 print(f"{log_prefix} val loss: {loss.item():.4f}")
                 if not args.no_wandb:
                     demo_imgs = get_prediction_demo(demo_batch, model)
-                    wandb.log({"val_loss": loss.item(), "demo_imgs": demo_imgs}, step=step)
+                    wandb.log(
+                        {
+                            "val_loss": loss.item(),
+                            "demo_imgs": wandb.Image(
+                                demo_imgs, caption="image, label, prediction"
+                            ),
+                        },
+                        step=step,
+                    )
 
                 # early stopping
                 cp_path = cp_dir / f"model.pth"
