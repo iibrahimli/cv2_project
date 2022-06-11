@@ -66,7 +66,7 @@ def get_dataloader(
 
 def get_prediction_demo(batch, model):
     """Returns image grid of predictions."""
-    imgs = batch["image"].to(device)[:16]
+    imgs = batch["image"][:16].to(device)
     labels = batch["fixation"][:16]
 
     model.eval()
@@ -80,6 +80,7 @@ def get_prediction_demo(batch, model):
     means = torch.tensor(IMAGENET_STD).view(1, 3, 1, 1)
     stds = torch.tensor(IMAGENET_MEAN).view(1, 3, 1, 1)
     imgs = (imgs * stds) + means
+    imgs = (imgs - imgs.min()) / (imgs.max() - imgs.min())
 
     # scale preds to [0, 1]
     preds = torch.exp(preds)
@@ -90,8 +91,9 @@ def get_prediction_demo(batch, model):
 
     # merge images, labels, and predictions
     res = torch.cat((imgs, labels, preds), dim=3)
+    res = make_grid(res, nrow=4)
 
-    return make_grid(res, nrow=4).permute(1, 2, 0)
+    return res
 
 
 def run_on_batch(model, batch, loss_fn):
