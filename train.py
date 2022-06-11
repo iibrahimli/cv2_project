@@ -66,8 +66,8 @@ def get_dataloader(
 
 def get_prediction_demo(batch, model):
     """Returns image grid of predictions."""
-    imgs = batch["image"].to(device)
-    labels = batch["fixation"]
+    imgs = batch["image"].to(device)[:16]
+    labels = batch["fixation"][:16]
 
     model.eval()
     with torch.no_grad():
