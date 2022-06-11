@@ -91,7 +91,7 @@ def get_prediction_demo(batch, model):
 
     # merge images, labels, and predictions
     res = torch.cat((imgs, labels, preds), dim=3)
-    res = make_grid(res, nrow=8)
+    res = make_grid(res, nrow=2)
 
     return res
 
@@ -164,7 +164,7 @@ if __name__ == "__main__":
     for epoch in range(args.max_epochs):
         if stopped:
             break
-        
+
         for it, batch in enumerate(train_dl):
             step += 1
 
