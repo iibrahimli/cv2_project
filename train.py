@@ -91,7 +91,7 @@ def get_prediction_demo(batch, model):
 
     # merge images, labels, and predictions
     res = torch.cat((imgs, labels, preds), dim=3)
-    res = make_grid(res, nrow=4)
+    res = make_grid(res, nrow=8)
 
     return res
 
