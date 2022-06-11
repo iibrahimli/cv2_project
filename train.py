@@ -107,6 +107,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_root_dir", type=str, default="data")
     parser.add_argument("--checkpoint_dir", type=str, default="checkpoints")
+    parser.add_argument("--resume", action="store_true")
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--max_epochs", type=int, default=10)
     parser.add_argument("--lr", type=float, default=1e-3)
@@ -125,6 +126,7 @@ if __name__ == "__main__":
 
     cp_dir = Path(args.checkpoint_dir)
     cp_dir.mkdir(exist_ok=True)
+    cp_path = cp_dir / f"model.pth"
 
     # get dataloaders
     train_dl = get_dataloader(
@@ -150,6 +152,12 @@ if __name__ == "__main__":
     loss_fn = nn.BCEWithLogitsLoss().to(device)
     n_trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"Number of trainable parameters: {n_trainable_params}")
+
+    if args.resume:
+        cp = torch.load(cp_path)
+        model.load_state_dict(cp["model_state_dict"])
+        optimizer.load_state_dict(cp["optimizer_state_dict"])
+        print("Loaded state from checkpoint")
 
     if not args.no_wandb:
         wandb.init(project="fixation-prediction", config=args)
@@ -216,7 +224,6 @@ if __name__ == "__main__":
                     )
 
                 # early stopping
-                cp_path = cp_dir / f"model.pth"
                 if val_loss < min_val_loss:
                     min_val_loss = val_loss
                     es_counter = 0
