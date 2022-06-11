@@ -131,6 +131,10 @@ if __name__ == "__main__":
     val_dl = get_dataloader(args.data_root_dir, "val", batch_size=args.batch_size)
     test_dl = get_dataloader(args.data_root_dir, "test", batch_size=args.batch_size)
 
+    print(f"Training: {len(train_dl) * args.batch_size} images")
+    print(f"Validation: {len(val_dl) * args.batch_size} images")
+    print(f"Testing: {len(test_dl) * args.batch_size} images")
+
     # initialize model, loss, and optimizer
     model = FixNet(
         Path(args.data_root_dir) / "center_bias_density.npy",
