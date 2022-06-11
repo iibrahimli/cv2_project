@@ -2,7 +2,6 @@
 Training script.
 
 TODO:
- - fix ES patience counting
 """
 
 import time
@@ -221,7 +220,7 @@ if __name__ == "__main__":
                 if val_loss < min_val_loss:
                     min_val_loss = val_loss
                     es_counter = 0
-
+                    print(f"{log_prefix} New minimum validation loss: {val_loss:.4f}")
                     # save checkpoint
                     torch.save(
                         {
