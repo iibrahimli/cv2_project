@@ -114,6 +114,7 @@ if __name__ == "__main__":
     parser.add_argument("--freeze_encoder", action="store_true")
     parser.add_argument("--no_aug", action="store_true")
     parser.add_argument("--no_wandb", action="store_true")
+    parser.add_argument("--no_center_bias", action="store_true")
     parser.add_argument("--val_freq", type=int, default=50)
     parser.add_argument("--log_freq", type=int, default=5)
     parser.add_argument("--es_patience", type=int, default=20)
@@ -138,11 +139,14 @@ if __name__ == "__main__":
     print(f"Testing: {len(test_dl) * args.batch_size} images")
 
     # initialize model, loss, and optimizer
+    center_bias_path = None
+    if not args.no_center_bias:
+        center_bias_path = Path(args.data_root_dir) / "center_bias_density.npy"
     model = FixNet(
-        Path(args.data_root_dir) / "center_bias_density.npy",
+        center_bias_path=center_bias_path,
         freeze_encoder=args.freeze_encoder,
     ).to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=0.05)
     # loss_fn = nn.MSELoss()
     loss_fn = nn.BCEWithLogitsLoss().to(device)
     n_trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)

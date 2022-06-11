@@ -79,7 +79,7 @@ class FixNet(nn.Module):
     UNet-like model for fixation prediction.
     """
 
-    def __init__(self, center_bias_path, freeze_encoder=False):
+    def __init__(self, center_bias_path=None, freeze_encoder=False):
         super().__init__()
 
         # encoder is a pretrained resnext50
@@ -101,11 +101,14 @@ class FixNet(nn.Module):
         self.smoothing_kernel = nn.Parameter(gaussian_kernel, requires_grad=False)
 
         # center bias
-        center_bias_arr = np.load(center_bias_path)
-        center_bias_log = np.log(center_bias_arr / center_bias_arr.sum())
-        self.center_bias = nn.Parameter(
-            torch.from_numpy(center_bias_log), requires_grad=False
-        )
+        if center_bias_path:
+            center_bias_arr = np.load(center_bias_path)
+            center_bias_log = np.log(center_bias_arr / center_bias_arr.sum())
+            self.center_bias = nn.Parameter(
+                torch.from_numpy(center_bias_log), requires_grad=False
+            )
+        else:
+            self.center_bias = None
 
         if freeze_encoder:
             for param in self.encoder.parameters():
@@ -119,6 +122,7 @@ class FixNet(nn.Module):
         x = F.conv2d(x, self.smoothing_kernel, padding=11)
 
         # add center bias
-        x = x + self.center_bias
+        if self.center_bias is not None:
+            x = x + self.center_bias
 
         return x
