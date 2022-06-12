@@ -26,24 +26,24 @@ class Decoder(nn.Module):
     def __init__(self):
         super().__init__()
         self.bottleneck_up = nn.Sequential(
-            nn.ConvTranspose2d(1024, 512, 2, 2, bias=False),
+            nn.ConvTranspose2d(1024, 512, 2, stride=2, bias=False),
             nn.BatchNorm2d(512),
             nn.ReLU(),
         )
         self.decoder_blocks = nn.ModuleList(
             [
                 nn.Sequential(
-                    nn.Conv2d(n_ch * 2, n_ch, 3, padding=1, bias=False),
+                    nn.Conv2d(n_ch * 4, n_ch, 3, padding=1, bias=False),
                     nn.BatchNorm2d(n_ch),
                     nn.ReLU(inplace=True),
-                    nn.Conv2d(n_ch, n_ch // 2, 3, padding=1, bias=False),
-                    nn.BatchNorm2d(n_ch // 2),
+                    nn.Conv2d(n_ch, n_ch, 3, padding=1, bias=False),
+                    nn.BatchNorm2d(n_ch),
                     nn.ReLU(inplace=True),
-                    nn.ConvTranspose2d(n_ch // 2, n_ch // 2, 2, 2, bias=False),
-                    nn.BatchNorm2d(n_ch // 2),
+                    nn.ConvTranspose2d(n_ch, n_ch, 2, stride=2, bias=False),
+                    nn.BatchNorm2d(n_ch),
                     nn.ReLU(inplace=True),
                 )
-                for n_ch in [512, 256, 128, 64]
+                for n_ch in [256, 128, 64, 32]
             ]
         )
         self.out = nn.Sequential(
@@ -122,7 +122,7 @@ class FixNet(nn.Module):
             x = x + self.center_bias
 
         return x
-    
+
     def set_encoder_trainable(self, trainable: bool):
         for param in self.encoder.parameters():
-                param.requires_grad = trainable
+            param.requires_grad = trainable
