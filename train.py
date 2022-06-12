@@ -38,7 +38,13 @@ def get_dataloader(
     if use_aug:
         transforms.extend(
             [
-                A.RandomBrightnessContrast(0.3, 0.2, p=0.5),
+                A.HorizontalFlip(p=0.3),
+                A.Rotate(45, p=0.25),
+                A.ShiftScaleRotate(p=0.3),
+                A.OpticalDistortion(p=0.25),
+                A.GridDistortion(p=0.2),
+                A.RandomBrightnessContrast(0.2, 0.15, p=0.3),
+                A.HueSaturationValue(p=0.2),
             ]
         )
     transforms.extend(
@@ -229,7 +235,7 @@ if __name__ == "__main__":
                 if val_loss < min_val_loss:
                     min_val_loss = val_loss
                     es_counter = 0
-                    print(f"{log_prefix} New minimum validation loss: {min_val_loss:.4f}")
+                    print(f"{log_prefix} New minimum validation loss: {val_loss:.4f}")
                     # save checkpoint
                     torch.save(
                         {
