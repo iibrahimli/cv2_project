@@ -33,7 +33,6 @@ def get_dataloader(
     batch_size,
     use_aug=False,
     shuffle=True,
-    num_workers=0,
 ):
     transforms = []
     if use_aug:
@@ -57,7 +56,7 @@ def get_dataloader(
         ),
         batch_size=batch_size,
         shuffle=shuffle,
-        num_workers=num_workers,
+        num_workers=8,
         collate_fn=FixationDataset.collate_fn,
         pin_memory=True if device.type == "cuda" else False,
     )
