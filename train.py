@@ -212,12 +212,12 @@ if __name__ == "__main__":
                 val_loss = val_loss / len(val_dl)
 
                 # log
-                print(f"{log_prefix} val loss: {val_loss.item():.4f}")
+                print(f"{log_prefix} val loss: {val_loss:.4f}")
                 if not args.no_wandb:
                     demo_imgs = get_prediction_demo(demo_batch, model)
                     wandb.log(
                         {
-                            "val_loss": val_loss.item(),
+                            "val_loss": val_loss,
                             "demo_imgs": wandb.Image(
                                 demo_imgs, caption="image, label, prediction"
                             ),
