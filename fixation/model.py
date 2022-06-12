@@ -100,7 +100,7 @@ class FixNet(nn.Module):
         # center bias
         if center_bias_path:
             center_bias_arr = np.load(center_bias_path)
-            center_bias_log = np.log(center_bias_arr / center_bias_arr.sum())
+            center_bias_log = np.log(center_bias_arr / center_bias_arr.max())
             self.center_bias = nn.Parameter(
                 torch.from_numpy(center_bias_log), requires_grad=False
             )
