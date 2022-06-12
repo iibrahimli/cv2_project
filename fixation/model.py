@@ -36,12 +36,9 @@ class Decoder(nn.Module):
                     nn.Conv2d(n_ch * 2, n_ch, 3, padding=1),
                     nn.BatchNorm2d(n_ch),
                     nn.ReLU(inplace=True),
-                    nn.Conv2d(n_ch, n_ch, 3, padding=1),
-                    nn.BatchNorm2d(n_ch),
-                    nn.ReLU(inplace=True),
-                    nn.Conv2d(n_ch, n_ch, 3, padding=1),
-                    nn.BatchNorm2d(n_ch),
-                    nn.ReLU(inplace=True),
+                    # nn.Conv2d(n_ch, n_ch, 3, padding=1),
+                    # nn.BatchNorm2d(n_ch),
+                    # nn.ReLU(inplace=True),
                     nn.ConvTranspose2d(n_ch, n_ch // 2, 2, 2),
                     nn.BatchNorm2d(n_ch // 2),
                     nn.ReLU(inplace=True),
@@ -50,7 +47,7 @@ class Decoder(nn.Module):
             ]
         )
         self.out = nn.Sequential(
-            nn.Conv2d(32, 1, 3, padding=2),
+            nn.Conv2d(32, 1, 1),
         )
 
     def forward(self, features):
@@ -119,7 +116,7 @@ class FixNet(nn.Module):
         x = self.decoder(feats)
 
         # apply gaussian smoothing
-        x = F.conv2d(x, self.smoothing_kernel, padding=11)
+        x = F.conv2d(x, self.smoothing_kernel, padding=12)
 
         # add center bias
         if self.center_bias is not None:
