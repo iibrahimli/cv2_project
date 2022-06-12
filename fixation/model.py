@@ -108,8 +108,7 @@ class FixNet(nn.Module):
             self.center_bias = None
 
         if freeze_encoder:
-            for param in self.encoder.parameters():
-                param.requires_grad = False
+            self.set_encoder_trainable(False)
 
     def forward(self, x):
         feats = self.encoder(x)
@@ -123,3 +122,7 @@ class FixNet(nn.Module):
             x = x + self.center_bias
 
         return x
+    
+    def set_encoder_trainable(self, trainable: bool):
+        for param in self.encoder.parameters():
+                param.requires_grad = trainable
