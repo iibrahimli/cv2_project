@@ -107,6 +107,7 @@ if __name__ == "__main__":
     parser.add_argument("--data_root_dir", type=str, default="data")
     parser.add_argument("--checkpoint_dir", type=str, default="checkpoints")
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--optimizer", type=str, default="adam")
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--max_epochs", type=int, default=10)
     parser.add_argument("--lr", type=float, default=1e-3)
@@ -146,8 +147,10 @@ if __name__ == "__main__":
         center_bias_path=center_bias_path,
         freeze_encoder=args.freeze_encoder,
     ).to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
-    # loss_fn = nn.MSELoss()
+    if args.optimizer == "sgd":
+        optimizer = torch.optim.SGD(model.parameters(), lr=args.lr)
+    elif args.optimizer == "adam":
+        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     loss_fn = nn.BCEWithLogitsLoss().to(device)
     n_trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"Number of trainable parameters: {n_trainable_params}")
