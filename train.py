@@ -117,6 +117,7 @@ if __name__ == "__main__":
     parser.add_argument("--max_epochs", type=int, default=10)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--freeze_encoder", action="store_true")
+    parser.add_argument("--freeze_warmup", type=int, default=-1)
     parser.add_argument("--no_aug", action="store_true")
     parser.add_argument("--no_wandb", action="store_true")
     parser.add_argument("--no_center_bias", action="store_true")
@@ -186,6 +187,14 @@ if __name__ == "__main__":
         for it, batch in enumerate(train_dl):
             step += 1
 
+            if (
+                args.freeze_encoder
+                and args.freeze_warmup > 0
+                and step == args.freeze_warmup
+            ):
+                model.set_encoder_trainable(True)
+                print("Thawed the encoder")
+
             start_time = time.perf_counter()
 
             model.train()
@@ -196,9 +205,7 @@ if __name__ == "__main__":
 
             it_time = round((time.perf_counter() - start_time) * 1000)
 
-            log_prefix = (
-                f"[epoch {epoch+1}/{args.max_epochs}, iter {it+1}/{len(train_dl)}]"
-            )
+            log_prefix = f"[epoch {epoch+1}/{args.max_epochs}, iter {it+1}/{len(train_dl)}, step {step}]"
 
             # log
             if step % args.log_freq == 0:
