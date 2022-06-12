@@ -26,20 +26,20 @@ class Decoder(nn.Module):
     def __init__(self):
         super().__init__()
         self.bottleneck_up = nn.Sequential(
-            nn.ConvTranspose2d(1024, 512, 2, 2),
+            nn.ConvTranspose2d(1024, 512, 2, 2, bias=False),
             nn.BatchNorm2d(512),
             nn.ReLU(),
         )
         self.decoder_blocks = nn.ModuleList(
             [
                 nn.Sequential(
-                    nn.Conv2d(n_ch * 2, n_ch, 3, padding=1),
+                    nn.Conv2d(n_ch * 2, n_ch, 3, padding=1, bias=False),
                     nn.BatchNorm2d(n_ch),
                     nn.ReLU(inplace=True),
                     # nn.Conv2d(n_ch, n_ch, 3, padding=1),
                     # nn.BatchNorm2d(n_ch),
                     # nn.ReLU(inplace=True),
-                    nn.ConvTranspose2d(n_ch, n_ch // 2, 2, 2),
+                    nn.ConvTranspose2d(n_ch, n_ch // 2, 2, 2, bias=False),
                     nn.BatchNorm2d(n_ch // 2),
                     nn.ReLU(inplace=True),
                 )
@@ -47,7 +47,7 @@ class Decoder(nn.Module):
             ]
         )
         self.out = nn.Sequential(
-            nn.Conv2d(32, 1, 1),
+            nn.Conv2d(32, 1, 1, bias=True),
         )
 
     def forward(self, features):
