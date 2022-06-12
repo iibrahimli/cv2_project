@@ -55,7 +55,7 @@ class FixationDataset(Dataset):
         if self.split != "test":
             fix = imageio.imread(self.data_root_dir / self.fixations[idx])
             fix = fix[None, ...]
-            fix = fix / fix.max()
+            fix = fix / fix.sum()
         else:
             fix = None
 
