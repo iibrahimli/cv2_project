@@ -54,7 +54,6 @@ class FixationDataset(Dataset):
         img = imageio.imread(self.data_root_dir / self.images[idx])
         if self.split != "test":
             fix = imageio.imread(self.data_root_dir / self.fixations[idx])
-            fix = fix / fix.max()
         else:
             fix = None
 
@@ -62,7 +61,7 @@ class FixationDataset(Dataset):
             aug = self.transform(image=img, mask=fix)
             img = aug["image"]
             fix = aug["mask"]
-            fix = fix[None, ...]
+            fix = fix[None, ...] / fix.max()
 
         sample = {"image": img, "fixation": fix}
 
