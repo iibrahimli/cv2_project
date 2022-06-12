@@ -62,8 +62,8 @@ class FixationDataset(Dataset):
             aug = self.transform(image=img, mask=fix)
             img = aug["image"]
             fix = aug["mask"]
+            fix = fix[None, ...]
 
-        fix = fix[None, ...]
         sample = {"image": img, "fixation": fix}
 
         return sample
