@@ -56,7 +56,7 @@ def get_dataloader(
         ),
         batch_size=batch_size,
         shuffle=shuffle,
-        num_workers=8,
+        num_workers=2,
         collate_fn=FixationDataset.collate_fn,
         pin_memory=True if device.type == "cuda" else False,
     )
