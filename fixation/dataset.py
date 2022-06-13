@@ -31,17 +31,11 @@ class FixationDataset(Dataset):
 
         self.images = _get_list_from_file(self.data_root_dir / f"{split}_images.txt")
 
-        # human sort the filenames
-        int_re = re.compile(r"\d+")
-        sort_key = lambda x: int(int_re.search(x).group())
-        self.images.sort(key=sort_key)
-
         # fixations not available for test split
         if split != "test":
             self.fixations = _get_list_from_file(
                 self.data_root_dir / f"{split}_fixations.txt"
             )
-            self.fixations.sort(key=sort_key)
 
             assert len(self.images) == len(
                 self.fixations
