@@ -67,8 +67,13 @@ class FixationDataset(Dataset):
         Collate function for DataLoader.
         """
 
-        # batch is a list of dicts
-        imgs = torch.stack([x["image"] for x in batch])
-        fixs = torch.stack([x["fixation"] for x in batch])
+        res = {}
 
-        return {"image": imgs, "fixation": fixs}
+        # batch is a list of dicts
+        res["image"] = torch.stack([x["image"] for x in batch])
+        if "fixation" in batch[0]:
+            res["fixation"] = torch.stack([x["fixation"] for x in batch])
+        if "output_name" in batch[0]:
+            res["output_name"] = [x["output_name"] for x in batch]
+
+        return res
