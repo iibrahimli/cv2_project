@@ -45,7 +45,7 @@ class FixationDataset(Dataset):
         return len(self.images)
 
     def __getitem__(self, idx):
-        img = imageio.imread(self.data_root_dir / self.images[idx])
+        img = imageio.imread(self.data_root_dir / self.data_root_dir / self.images[idx])
         if self.split != "test":
             fix = imageio.imread(self.data_root_dir / self.fixations[idx])
         else:
@@ -58,6 +58,11 @@ class FixationDataset(Dataset):
             fix = fix[None, ...] / fix.max()
 
         sample = {"image": img, "fixation": fix}
+
+        if self.split == "test":
+            sample["output_name"] = Path(self.images[idx]).name.replace(
+                "image", "prediction"
+            )
 
         return sample
 
