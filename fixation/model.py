@@ -47,9 +47,9 @@ class Decoder(nn.Module):
             ]
         )
         self.out = nn.Sequential(
-            nn.Conv2d(32, 16, 3, padding=1, bias=False),
+            nn.Conv2d(32, 16, 4, padding=2, bias=False),
             nn.BatchNorm2d(16),
-            nn.ReLU(),
+            nn.ReLU(inplace=True),
             nn.Conv2d(16, 1, 1, bias=True),
         )
 
