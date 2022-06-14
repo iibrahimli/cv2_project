@@ -105,7 +105,9 @@ class FixNet(nn.Module):
                 torch.from_numpy(center_bias_log), requires_grad=False
             )
         else:
-            self.center_bias = nn.Parameter(torch.zeros(1, 224, 224), requires_grad=False)
+            self.center_bias = nn.Parameter(
+                torch.zeros(1, 224, 224), requires_grad=False
+            )
 
         if freeze_encoder:
             self.set_encoder_trainable(False)
