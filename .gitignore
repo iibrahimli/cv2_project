@@ -5,3 +5,4 @@ __pycache__/
 data/
 .DS_Store
 wandb/
+*_predictions/
