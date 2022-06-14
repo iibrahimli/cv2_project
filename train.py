@@ -172,7 +172,7 @@ if __name__ == "__main__":
         wandb.watch(model, log_freq=args.log_freq * 10)
 
     # demo batch
-    demo_batch = next(iter(train_dl))
+    demo_batch = next(iter(val_dl))
 
     step = -1
     min_val_loss = float("inf")
