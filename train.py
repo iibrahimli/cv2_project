@@ -42,8 +42,8 @@ def get_dataloader(
                 A.Rotate(45, p=0.25),
                 A.ShiftScaleRotate(p=0.3),
                 A.OpticalDistortion(p=0.1),
-                A.RandomBrightnessContrast(0.2, 0.15, p=0.3),
-                A.HueSaturationValue(p=0.2),
+                A.RandomBrightnessContrast(0.2, 0.15, p=0.4),
+                A.HueSaturationValue(p=0.3),
             ]
         )
     transforms.extend(
