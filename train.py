@@ -39,11 +39,11 @@ def get_dataloader(
         transforms.extend(
             [
                 A.HorizontalFlip(p=0.3),
-                A.Rotate(45, p=0.25),
+                A.Rotate(45, p=0.3),
                 A.ShiftScaleRotate(p=0.3),
                 A.OpticalDistortion(p=0.1),
-                A.RandomBrightnessContrast(0.2, 0.15, p=0.4),
-                A.HueSaturationValue(p=0.3),
+                A.RandomBrightnessContrast(0.2, 0.15, p=0.5),
+                A.HueSaturationValue(p=0.5),
             ]
         )
     transforms.extend(
