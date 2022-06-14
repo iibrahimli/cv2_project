@@ -47,7 +47,10 @@ class Decoder(nn.Module):
             ]
         )
         self.out = nn.Sequential(
-            nn.Conv2d(32, 1, 1, bias=True),
+            nn.Conv2d(32, 16, 3, padding=1, bias=False),
+            nn.BatchNorm2d(16),
+            nn.ReLU(),
+            nn.Conv2d(16, 1, 1, bias=True),
         )
 
     def forward(self, features):
