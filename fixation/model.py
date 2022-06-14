@@ -33,15 +33,12 @@ class Decoder(nn.Module):
         self.decoder_blocks = nn.ModuleList(
             [
                 nn.Sequential(
-                    nn.Conv2d(n_ch * 4, n_ch * 2, 3, padding=1, bias=False),
-                    nn.BatchNorm2d(n_ch * 2),
-                    nn.ReLU(inplace=True),
-                    nn.Conv2d(n_ch * 2, n_ch, 3, padding=1, bias=False),
+                    nn.Conv2d(n_ch * 4, n_ch, 3, padding=1, bias=False),
                     nn.BatchNorm2d(n_ch),
                     nn.ReLU(inplace=True),
-                    nn.Conv2d(n_ch, n_ch, 3, padding=1, bias=False),
-                    nn.BatchNorm2d(n_ch),
-                    nn.ReLU(inplace=True),
+                    # nn.Conv2d(n_ch, n_ch, 3, padding=1, bias=False),
+                    # nn.BatchNorm2d(n_ch),
+                    # nn.ReLU(inplace=True),
                     nn.ConvTranspose2d(n_ch, n_ch, 2, stride=2, bias=False),
                     nn.BatchNorm2d(n_ch),
                     nn.ReLU(inplace=True),
