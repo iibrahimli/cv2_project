@@ -156,9 +156,7 @@ if __name__ == "__main__":
     if args.optimizer == "sgd":
         optimizer = torch.optim.SGD(model.parameters(), lr=args.lr)
     elif args.optimizer == "adam":
-        optimizer = torch.optim.Adam(
-            model.parameters(), lr=args.lr, weight_decay=0.0005
-        )
+        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     loss_fn = nn.BCEWithLogitsLoss().to(device)
     n_trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"Number of trainable parameters: {n_trainable_params}")
